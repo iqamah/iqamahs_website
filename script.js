@@ -47,22 +47,38 @@ const masjids = [
     }
 ];
 
+// Prayer time icons
+const prayerIcons = {
+    fajr: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>',
+    dhuhr: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
+    asr: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
+    maghrib: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="2" x2="12" y2="9"></line><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line><line x1="1" y1="18" x2="3" y2="18"></line><line x1="21" y1="18" x2="23" y2="18"></line><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line><line x1="23" y1="22" x2="1" y2="22"></line><polyline points="8 6 12 2 16 6"></polyline></svg>',
+    isha: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+};
+
 // Initialize Map
 let map;
+let mapCombined;
 let markers = [];
+let markersCombined = [];
 let userLocation = null;
 let userMarker = null;
+let userMarkerCombined = null;
 
-function initMap() {
+function createMapInstance(elementId) {
     // Create map centered on Houston
-    map = L.map('map').setView([29.7604, -95.3698], 11);
+    const mapInstance = L.map(elementId).setView([29.7604, -95.3698], 11);
 
-    // Add tile layer (CartoDB Positron)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    // Add tile layer (CartoDB Voyager)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         maxZoom: 19
-    }).addTo(map);
+    }).addTo(mapInstance);
 
+    return mapInstance;
+}
+
+function addMarkersToMap(mapInstance, markersArray) {
     // Add custom markers for each masjid
     masjids.forEach(masjid => {
         // Create custom icon
@@ -90,9 +106,39 @@ function initMap() {
 
         // Create marker
         const marker = L.marker(masjid.coordinates, { icon: customIcon })
-            .addTo(map);
+            .addTo(mapInstance);
 
         // Create popup content
+        const prayerTimesHTML = `
+            <div class="popup-prayers">
+                <div class="popup-prayer-item">
+                    <span class="popup-prayer-icon">${prayerIcons.fajr}</span>
+                    <span class="popup-prayer-name">Fajr</span>
+                    <span class="popup-prayer-time">${masjid.prayerTimes.fajr}</span>
+                </div>
+                <div class="popup-prayer-item">
+                    <span class="popup-prayer-icon">${prayerIcons.dhuhr}</span>
+                    <span class="popup-prayer-name">Dhuhr</span>
+                    <span class="popup-prayer-time">${masjid.prayerTimes.dhuhr}</span>
+                </div>
+                <div class="popup-prayer-item">
+                    <span class="popup-prayer-icon">${prayerIcons.asr}</span>
+                    <span class="popup-prayer-name">Asr</span>
+                    <span class="popup-prayer-time">${masjid.prayerTimes.asr}</span>
+                </div>
+                <div class="popup-prayer-item">
+                    <span class="popup-prayer-icon">${prayerIcons.maghrib}</span>
+                    <span class="popup-prayer-name">Maghrib</span>
+                    <span class="popup-prayer-time">${masjid.prayerTimes.maghrib}</span>
+                </div>
+                <div class="popup-prayer-item">
+                    <span class="popup-prayer-icon">${prayerIcons.isha}</span>
+                    <span class="popup-prayer-name">Isha</span>
+                    <span class="popup-prayer-time">${masjid.prayerTimes.isha}</span>
+                </div>
+            </div>
+        `;
+
         const jumuahTimesHTML = masjid.jumuahTimes && masjid.jumuahTimes.length > 0
             ? `<div class="popup-jumuah">
                 <strong>Jumuah:</strong> ${masjid.jumuahTimes.join(', ')}
@@ -103,18 +149,42 @@ function initMap() {
             <div class="popup-content">
                 <div class="popup-title">${masjid.name}</div>
                 <div class="popup-address">${masjid.address}</div>
-                ${jumuahTimesHTML}
                 <span class="popup-distance">${masjid.distance}</span>
+                ${prayerTimesHTML}
+                ${jumuahTimesHTML}
             </div>
         `;
 
         marker.bindPopup(popupContent);
-        markers.push(marker);
+
+        // Add click handler to center the map on the marker
+        marker.on('click', function() {
+            mapInstance.setView(masjid.coordinates, 13, {
+                animate: true,
+                duration: 0.5
+            });
+        });
+
+        markersArray.push(marker);
     });
 
     // Fit bounds to show all markers
-    const group = L.featureGroup(markers);
-    map.fitBounds(group.getBounds().pad(0.1));
+    if (markersArray.length > 0) {
+        const group = L.featureGroup(markersArray);
+        mapInstance.fitBounds(group.getBounds().pad(0.1));
+    }
+}
+
+function initMap() {
+    map = createMapInstance('map');
+    addMarkersToMap(map, markers);
+}
+
+function initCombinedMap() {
+    if (!mapCombined) {
+        mapCombined = createMapInstance('map-combined');
+        addMarkersToMap(mapCombined, markersCombined);
+    }
 }
 
 // Calculate distance between two coordinates using Haversine formula
@@ -147,19 +217,25 @@ function getUserLocation() {
                 // Calculate distances and sort masjids
                 updateDistances();
 
-                // Re-render the list with sorted data
-                renderMasjidList();
+                // Re-render the lists with sorted data
+                renderMasjidList('masjid-list');
+                renderMasjidList('masjid-list-combined');
 
-                // Optionally recenter map to include user location
-                const allPoints = [
-                    [userLocation.lat, userLocation.lng],
-                    ...masjids.map(m => m.coordinates)
-                ];
+                // Recenter maps to include user location
                 const group = L.featureGroup([
                     userMarker,
                     ...markers
                 ]);
                 map.fitBounds(group.getBounds().pad(0.1));
+
+                // Update combined map if it exists
+                if (mapCombined && userMarkerCombined) {
+                    const groupCombined = L.featureGroup([
+                        userMarkerCombined,
+                        ...markersCombined
+                    ]);
+                    mapCombined.fitBounds(groupCombined.getBounds().pad(0.1));
+                }
             },
             (error) => {
                 console.error('Error getting location:', error);
@@ -173,10 +249,6 @@ function getUserLocation() {
 
 // Plot user's location on the map
 function plotUserLocation() {
-    if (userMarker) {
-        map.removeLayer(userMarker);
-    }
-
     const userIcon = L.divIcon({
         className: 'user-marker',
         html: `<div style="
@@ -198,9 +270,23 @@ function plotUserLocation() {
         popupAnchor: [0, -15]
     });
 
+    // Add to main map
+    if (userMarker) {
+        map.removeLayer(userMarker);
+    }
     userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
         .addTo(map)
         .bindPopup('<div class="popup-content"><div class="popup-title">Your Location</div></div>');
+
+    // Add to combined map if it exists
+    if (mapCombined) {
+        if (userMarkerCombined) {
+            mapCombined.removeLayer(userMarkerCombined);
+        }
+        userMarkerCombined = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
+            .addTo(mapCombined)
+            .bindPopup('<div class="popup-content"><div class="popup-title">Your Location</div></div>');
+    }
 }
 
 // Update distances based on user location
@@ -223,8 +309,9 @@ function updateDistances() {
 }
 
 // Render Masjid List
-function renderMasjidList() {
-    const listContainer = document.getElementById('masjid-list');
+function renderMasjidList(containerId = 'masjid-list') {
+    const listContainer = document.getElementById(containerId);
+    if (!listContainer) return;
 
     const html = masjids.map(masjid => `
         <div class="masjid-card">
@@ -242,22 +329,27 @@ function renderMasjidList() {
                 <h4>Today's Iqamah Times</h4>
                 <div class="prayer-grid">
                     <div class="prayer-item">
+                        <span class="prayer-icon">${prayerIcons.fajr}</span>
                         <span class="prayer-name">Fajr</span>
                         <span class="prayer-time">${masjid.prayerTimes.fajr}</span>
                     </div>
                     <div class="prayer-item">
+                        <span class="prayer-icon">${prayerIcons.dhuhr}</span>
                         <span class="prayer-name">Dhuhr</span>
                         <span class="prayer-time">${masjid.prayerTimes.dhuhr}</span>
                     </div>
                     <div class="prayer-item">
+                        <span class="prayer-icon">${prayerIcons.asr}</span>
                         <span class="prayer-name">Asr</span>
                         <span class="prayer-time">${masjid.prayerTimes.asr}</span>
                     </div>
                     <div class="prayer-item">
+                        <span class="prayer-icon">${prayerIcons.maghrib}</span>
                         <span class="prayer-name">Maghrib</span>
                         <span class="prayer-time">${masjid.prayerTimes.maghrib}</span>
                     </div>
                     <div class="prayer-item">
+                        <span class="prayer-icon">${prayerIcons.isha}</span>
                         <span class="prayer-name">Isha</span>
                         <span class="prayer-time">${masjid.prayerTimes.isha}</span>
                     </div>
@@ -299,10 +391,28 @@ function setupViewToggle() {
             views.forEach(view => view.classList.remove('active'));
             document.getElementById(`${viewType}-view`).classList.add('active');
 
-            // Invalidate map size when switching to map view
+            // Handle map initialization and resizing
             if (viewType === 'map') {
                 setTimeout(() => {
                     map.invalidateSize();
+                }, 100);
+            } else if (viewType === 'combined') {
+                // Initialize combined map if not already done
+                if (!mapCombined) {
+                    initCombinedMap();
+                    // Add user marker if location is available
+                    if (userLocation) {
+                        plotUserLocation();
+                        // Fit bounds to include user and markers
+                        const allMarkers = userMarkerCombined ? [userMarkerCombined, ...markersCombined] : markersCombined;
+                        if (allMarkers.length > 0) {
+                            const group = L.featureGroup(allMarkers);
+                            mapCombined.fitBounds(group.getBounds().pad(0.1));
+                        }
+                    }
+                }
+                setTimeout(() => {
+                    mapCombined.invalidateSize();
                 }, 100);
             }
         });
@@ -312,7 +422,8 @@ function setupViewToggle() {
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     initMap();
-    renderMasjidList();
+    renderMasjidList('masjid-list');
+    renderMasjidList('masjid-list-combined');
     setupViewToggle();
 
     // Request user's location
