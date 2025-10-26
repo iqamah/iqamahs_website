@@ -21,67 +21,34 @@
     <header class="header">
         <div class="container">
             <h1 class="logo">🕌 Iqamahs</h1>
-            <p class="tagline">Find prayer times at masjids near you</p>
         </div>
     </header>
 
-    <!-- View Toggle -->
-    <div class="view-toggle">
+    <!-- Search Bar -->
+    <div class="search-section">
         <div class="container">
-            <button class="toggle-btn active" data-view="map">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
+            <div class="search-bar">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
                 </svg>
-                Map
-            </button>
-            <button class="toggle-btn" data-view="list">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="8" y1="6" x2="21" y2="6"></line>
-                    <line x1="8" y1="12" x2="21" y2="12"></line>
-                    <line x1="8" y1="18" x2="21" y2="18"></line>
-                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                </svg>
-                List
-            </button>
-            <button class="toggle-btn" data-view="combined">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="18"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                </svg>
-                Combined
-            </button>
+                <input type="text" id="location-search" placeholder="Search by city or zip code (US/Canada)..." />
+                <button id="search-btn" class="search-button">Search</button>
+            </div>
         </div>
     </div>
 
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
-            <!-- Map View -->
-            <div id="map-view" class="view active">
-                <div id="map"></div>
-            </div>
-
-            <!-- List View -->
-            <div id="list-view" class="view">
-                <div class="masjid-list" id="masjid-list">
-                    <!-- Masjid cards will be inserted here by JavaScript -->
-                </div>
-            </div>
-
             <!-- Combined View -->
-            <div id="combined-view" class="view">
-                <div class="combined-container">
-                    <div class="combined-map">
-                        <div id="map-combined"></div>
-                    </div>
-                    <div class="combined-list">
-                        <div class="masjid-list" id="masjid-list-combined">
-                            <!-- Masjid cards will be inserted here by JavaScript -->
-                        </div>
+            <div class="combined-container">
+                <div class="combined-map">
+                    <div id="map"></div>
+                </div>
+                <div class="combined-list">
+                    <div class="masjid-list" id="masjid-list">
+                        <!-- Masjid cards will be inserted here by JavaScript -->
                     </div>
                 </div>
             </div>
