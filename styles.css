@@ -30,6 +30,18 @@ body {
 }
 
 .container {
+    width: 100%;
+    padding: 0;
+}
+
+.container-header {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    width: 100%;
+}
+
+.container-search {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
@@ -54,7 +66,7 @@ body {
 .search-section {
     background: white;
     border-bottom: 1px solid var(--border-color);
-    padding: 1.5rem 0;
+    padding: 0.75rem 0;
     position: sticky;
     top: 0;
     z-index: 999;
@@ -64,10 +76,10 @@ body {
 .search-bar {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     background: var(--background);
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
     border: 2px solid var(--border-color);
     transition: border-color 0.3s ease;
 }
@@ -96,12 +108,12 @@ body {
 }
 
 .search-button {
-    padding: 0.5rem 1.5rem;
+    padding: 0.4rem 1rem;
     background: var(--primary-color);
     color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
     font-weight: 500;
     font-family: 'Inter', sans-serif;
     cursor: pointer;
@@ -118,14 +130,16 @@ body {
 /* Main Content */
 .main-content {
     flex: 1;
-    padding: 2rem 0;
+    padding: 0;
+    overflow: hidden;
 }
 
 /* Combined View */
 .combined-container {
     display: flex;
-    gap: 1.5rem;
-    height: 600px;
+    gap: 0;
+    height: calc(100vh - 140px);
+    width: 100%;
 }
 
 .combined-map {
@@ -136,8 +150,8 @@ body {
 #map {
     width: 100%;
     height: 100%;
-    border-radius: 16px;
-    box-shadow: var(--shadow);
+    border-radius: 0;
+    box-shadow: none;
     overflow: hidden;
 }
 
@@ -145,24 +159,25 @@ body {
     flex: 1;
     min-width: 0;
     overflow-y: auto;
-    padding-right: 0.5rem;
+    padding: 1rem;
+    background: white;
 }
 
 .combined-list .masjid-list {
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 /* List View */
 .masjid-list {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 0.75rem;
 }
 
 .masjid-card {
     background: var(--card-background);
-    border-radius: 16px;
-    padding: 1.5rem;
+    border-radius: 8px;
+    padding: 0.75rem;
     box-shadow: var(--shadow);
     transition: all 0.3s ease;
     border: 1px solid var(--border-color);
@@ -170,7 +185,6 @@ body {
 
 .masjid-card:hover {
     box-shadow: var(--shadow-hover);
-    transform: translateY(-2px);
 }
 
 .masjid-card.selected {
@@ -180,112 +194,73 @@ body {
 }
 
 .masjid-header {
-    display: flex;
-    align-items: start;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.masjid-icon {
-    font-size: 2rem;
-    flex-shrink: 0;
-}
-
-.masjid-info {
-    flex: 1;
+    margin-bottom: 0.5rem;
 }
 
 .masjid-name {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-dark);
     margin-bottom: 0.25rem;
-}
-
-.masjid-address {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.masjid-distance {
-    display: inline-block;
-    background: var(--primary-light);
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    margin-top: 0.5rem;
-}
-
-.prayer-times {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border-color);
-}
-
-.prayer-times h4 {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-dark);
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.prayer-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-}
-
-.prayer-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem;
-    background: var(--background);
-    border-radius: 8px;
+    flex-wrap: wrap;
 }
 
-.prayer-icon {
-    display: flex;
+.masjid-address {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    line-height: 1.3;
+}
+
+.masjid-distance {
+    display: inline-flex;
     align-items: center;
-    color: var(--primary-color);
-    flex-shrink: 0;
-}
-
-.prayer-icon svg {
-    stroke: var(--primary-color);
-}
-
-.prayer-name {
-    font-size: 0.9rem;
+    background: var(--primary-light);
+    color: white;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
     font-weight: 500;
-    color: var(--text-dark);
-    flex: 1;
 }
 
-.prayer-time {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-left: auto;
-}
-
-.jumuah-times {
-    margin-top: 1rem;
-    padding-top: 1rem;
+.prayer-times-compact {
+    padding-top: 0.5rem;
     border-top: 1px solid var(--border-color);
 }
 
-.jumuah-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+.prayer-row {
+    display: flex;
     gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.prayer-item-compact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.prayer-item-compact svg {
+    width: 14px;
+    height: 14px;
+    stroke: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.jumuah-row {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+}
+
+.jumuah-row strong {
+    color: var(--primary-color);
 }
 
 /* Leaflet Popup Customization */
@@ -389,45 +364,80 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .header {
+        padding: 1rem 0;
+    }
+
     .logo {
         font-size: 1.5rem;
     }
 
+    .container-header,
+    .container-search {
+        padding: 0 1rem;
+    }
+
+    .search-section {
+        padding: 0.5rem 0;
+    }
+
     .search-bar {
-        flex-direction: column;
+        flex-wrap: wrap;
         gap: 0.5rem;
     }
 
     #location-search {
-        width: 100%;
+        flex: 1 1 100%;
+        min-width: 0;
     }
 
     .search-button {
-        width: 100%;
+        flex: 1;
+        min-width: 100px;
     }
 
     .combined-container {
         flex-direction: column;
         height: auto;
+        min-height: calc(100vh - 150px);
     }
 
-    .combined-map,
-    .combined-list {
+    .combined-map {
         flex: none;
         width: 100%;
-    }
-
-    #map {
-        height: 400px;
+        height: 50vh;
+        min-height: 300px;
     }
 
     .combined-list {
-        max-height: 600px;
-        margin-top: 1rem;
+        flex: 1;
+        width: 100%;
+        padding: 0.75rem;
+        min-height: 50vh;
     }
 
-    .prayer-grid {
-        grid-template-columns: 1fr;
+    .masjid-card {
+        padding: 0.65rem;
+    }
+
+    .masjid-name {
+        font-size: 0.95rem;
+    }
+
+    .masjid-address {
+        font-size: 0.8rem;
+    }
+
+    .prayer-row {
+        gap: 0.5rem;
+    }
+
+    .prayer-item-compact {
+        font-size: 0.8rem;
+    }
+
+    .jumuah-row {
+        font-size: 0.8rem;
     }
 }
 
