@@ -200,6 +200,7 @@ const prayerIcons = {
 let map;
 let markers = [];
 let selectedMasjidId = null;
+let currentSearchQuery = '';
 
 function createMapInstance(elementId) {
     // Create map centered on Houston
@@ -267,10 +268,32 @@ function initMap() {
     setTimeout(() => {
         map.invalidateSize();
     }, 100);
+
+    // Listen for map movement to update the list
+    map.on('moveend', () => {
+        // Only update list based on bounds if there's no search query
+        if (!currentSearchQuery || currentSearchQuery.trim() === '') {
+            renderMasjidList();
+        }
+    });
 }
 
 // Geocode location (city or zip code) using Nominatim
 async function searchLocation(query) {
+    if (!query || query.trim() === '') {
+        // Clear search
+        currentSearchQuery = '';
+        renderMasjidList();
+        return;
+    }
+
+    // Set the search query for filtering
+    currentSearchQuery = query;
+
+    // Re-render the list with filtered results
+    renderMasjidList();
+
+    // Try to geocode and center the map
     try {
         const response = await fetch(
             `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us,ca&limit=1`
@@ -287,13 +310,79 @@ async function searchLocation(query) {
                 animate: true,
                 duration: 1
             });
-        } else {
-            alert('Location not found. Please try a different city or zip code.');
         }
     } catch (error) {
         console.error('Geocoding error:', error);
-        alert('Error searching for location. Please try again.');
+        // Don't show error - filtering still works even if geocoding fails
     }
+}
+
+// Filter masjids based on map bounds
+function getMasjidsInBounds() {
+    if (!map) return masjids;
+
+    const bounds = map.getBounds();
+    return masjids.filter(masjid => {
+        return bounds.contains(masjid.coordinates);
+    });
+}
+
+// Filter masjids based on search query
+function filterMasjidsBySearch(query) {
+    if (!query || query.trim() === '') return masjids;
+
+    const searchTerm = query.toLowerCase().trim();
+
+    return masjids.filter(masjid => {
+        // Extract city, state, and zip from address
+        // Format: "address, city, state zip"
+        const addressParts = masjid.address.split(',');
+        const name = masjid.name.toLowerCase();
+        const fullAddress = masjid.address.toLowerCase();
+
+        // Check name match (partial or full)
+        if (name.includes(searchTerm)) return true;
+
+        // Check full address match
+        if (fullAddress.includes(searchTerm)) return true;
+
+        // Extract city (second part after first comma)
+        if (addressParts.length >= 2) {
+            const city = addressParts[1].trim().toLowerCase();
+            if (city.includes(searchTerm)) return true;
+        }
+
+        // Extract state and zip (last part)
+        if (addressParts.length >= 3) {
+            const stateZip = addressParts[2].trim().toLowerCase();
+            const stateZipParts = stateZip.split(' ');
+
+            // Check state match
+            if (stateZipParts.length >= 1) {
+                const state = stateZipParts[0].toLowerCase();
+                if (state.includes(searchTerm)) return true;
+            }
+
+            // Check zip match
+            if (stateZipParts.length >= 2) {
+                const zip = stateZipParts[1];
+                if (zip.includes(searchTerm)) return true;
+            }
+        }
+
+        return false;
+    });
+}
+
+// Get filtered masjids based on current context
+function getFilteredMasjids() {
+    // If there's a search query, filter by search criteria
+    if (currentSearchQuery && currentSearchQuery.trim() !== '') {
+        return filterMasjidsBySearch(currentSearchQuery);
+    }
+
+    // Otherwise, show masjids within map bounds
+    return getMasjidsInBounds();
 }
 
 // Select and highlight a masjid
@@ -328,7 +417,14 @@ function renderMasjidList() {
     const listContainer = document.getElementById('masjid-list');
     if (!listContainer) return;
 
-    const html = masjids.map(masjid => `
+    const filteredMasjids = getFilteredMasjids();
+
+    if (filteredMasjids.length === 0) {
+        listContainer.innerHTML = '<div style="padding: 2rem; text-align: center; color: #7f8c8d;">No masjids found matching your criteria.</div>';
+        return;
+    }
+
+    const html = filteredMasjids.map(masjid => `
         <div class="masjid-card" data-masjid-id="${masjid.id}" onclick="selectMasjid(${masjid.id})" style="cursor: pointer;">
             <div class="masjid-header">
                 <div>
@@ -374,19 +470,26 @@ function setupSearch() {
     // Search on button click
     searchBtn.addEventListener('click', () => {
         const query = searchInput.value.trim();
-        if (query) {
-            searchLocation(query);
-        }
+        searchLocation(query);
     });
 
     // Search on Enter key
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const query = searchInput.value.trim();
-            if (query) {
-                searchLocation(query);
-            }
+            searchLocation(query);
         }
+    });
+
+    // Live filtering as user types
+    let searchTimeout;
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const query = e.target.value.trim();
+            currentSearchQuery = query;
+            renderMasjidList();
+        }, 300); // Debounce for 300ms
     });
 }
 
