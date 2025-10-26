@@ -1,9 +1,9 @@
-import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import React, { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Custom marker icon
+// Custom marker icon for masjids
 const createCustomIcon = () => {
   return L.divIcon({
     className: 'custom-marker-icon',
@@ -36,8 +36,64 @@ const createCustomIcon = () => {
   });
 };
 
-const MapView = ({ masjids }) => {
-  const center = [29.7604, -95.3698]; // Houston coordinates
+// Custom marker icon for user location
+const createUserIcon = () => {
+  return L.divIcon({
+    className: 'custom-marker-icon',
+    html: `
+      <div style="
+        position: relative;
+        width: 24px;
+        height: 24px;
+      ">
+        <div style="
+          background: #3b82f6;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 4px solid white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        ">
+        </div>
+        <div style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: #1e40af;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+        ">
+        </div>
+      </div>
+    `,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12]
+  });
+};
+
+// Component to control map centering
+const MapController = ({ selectedMasjid }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (selectedMasjid) {
+      map.flyTo(selectedMasjid.coordinates, 14, {
+        duration: 1.5,
+      });
+    }
+  }, [selectedMasjid, map]);
+
+  return null;
+};
+
+const MapView = ({ masjids, userLocation, selectedMasjid }) => {
+  const center = userLocation ? [userLocation.lat, userLocation.lng] : [29.7604, -95.3698];
 
   return (
     <div className="w-full h-[600px] rounded-xl overflow-hidden shadow-lg border border-gray-200">
@@ -52,6 +108,23 @@ const MapView = ({ masjids }) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
+        <MapController selectedMasjid={selectedMasjid} />
+
+        {/* User location marker */}
+        {userLocation && (
+          <Marker
+            position={[userLocation.lat, userLocation.lng]}
+            icon={createUserIcon()}
+          >
+            <Popup>
+              <div className="p-2">
+                <p className="font-semibold text-blue-700">Your Location</p>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Masjid markers */}
         {masjids.map((masjid) => (
           <Marker
             key={masjid.id}

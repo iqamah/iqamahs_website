@@ -1,6 +1,6 @@
 import React from 'react';
 
-const MasjidCard = ({ masjid }) => {
+const MasjidCard = ({ masjid, onClick }) => {
   const prayers = [
     { name: 'Fajr', time: masjid.prayerTimes.fajr },
     { name: 'Dhuhr', time: masjid.prayerTimes.dhuhr },
@@ -10,7 +10,10 @@ const MasjidCard = ({ masjid }) => {
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 p-6 border border-gray-100 animate-fade-in">
+    <div
+      onClick={onClick}
+      className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 p-6 border border-gray-100 animate-fade-in cursor-pointer"
+    >
       <div className="flex items-start gap-4 mb-4">
         <div className="text-4xl flex-shrink-0">🕌</div>
         <div className="flex-1">

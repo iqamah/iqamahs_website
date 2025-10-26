@@ -1,11 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from './components/Header';
 import MapView from './components/MapView';
 import ListView from './components/ListView';
 import { masjids } from './data/masjids';
+import { calculateDistance, formatDistance } from './utils/distance';
 
 function App() {
   const [activeView, setActiveView] = useState('map');
+  const [userLocation, setUserLocation] = useState(null);
+  const [selectedMasjid, setSelectedMasjid] = useState(null);
+  const [locationError, setLocationError] = useState(null);
+
+  // Get user's location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+          setLocationError(null);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setLocationError('Unable to get your location. Please enable location services.');
+        }
+      );
+    } else {
+      setLocationError('Geolocation is not supported by your browser.');
+    }
+  }, []);
+
+  // Calculate distances and sort masjids
+  const sortedMasjids = useMemo(() => {
+    if (!userLocation) {
+      return masjids;
+    }
+
+    return masjids
+      .map((masjid) => {
+        const distance = calculateDistance(
+          userLocation.lat,
+          userLocation.lng,
+          masjid.coordinates[0],
+          masjid.coordinates[1]
+        );
+        return {
+          ...masjid,
+          distanceFromUser: distance,
+          distance: formatDistance(distance),
+        };
+      })
+      .sort((a, b) => a.distanceFromUser - b.distanceFromUser);
+  }, [userLocation]);
+
+  // Handle masjid card click - switch to map view and center on masjid
+  const handleMasjidClick = (masjid) => {
+    setSelectedMasjid(masjid);
+    setActiveView('map');
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -48,10 +102,23 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {locationError && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+            {locationError}
+          </div>
+        )}
         {activeView === 'map' ? (
-          <MapView masjids={masjids} />
+          <MapView
+            masjids={sortedMasjids}
+            userLocation={userLocation}
+            selectedMasjid={selectedMasjid}
+            onMasjidSelect={setSelectedMasjid}
+          />
         ) : (
-          <ListView masjids={masjids} />
+          <ListView
+            masjids={sortedMasjids}
+            onMasjidClick={handleMasjidClick}
+          />
         )}
       </main>
 
