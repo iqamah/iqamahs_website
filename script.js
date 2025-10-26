@@ -58,12 +58,8 @@ const prayerIcons = {
 
 // Initialize Map
 let map;
-let mapCombined;
 let markers = [];
-let markersCombined = [];
-let userLocation = null;
-let userMarker = null;
-let userMarkerCombined = null;
+let selectedMasjidId = null;
 
 function createMapInstance(elementId) {
     // Create map centered on Houston
@@ -78,7 +74,7 @@ function createMapInstance(elementId) {
     return mapInstance;
 }
 
-function addMarkersToMap(mapInstance, markersArray) {
+function addMarkersToMap() {
     // Add custom markers for each masjid
     masjids.forEach(masjid => {
         // Create custom icon
@@ -106,215 +102,89 @@ function addMarkersToMap(mapInstance, markersArray) {
 
         // Create marker
         const marker = L.marker(masjid.coordinates, { icon: customIcon })
-            .addTo(mapInstance);
+            .addTo(map);
 
-        // Create popup content
-        const prayerTimesHTML = `
-            <div class="popup-prayers">
-                <div class="popup-prayer-item">
-                    <span class="popup-prayer-icon">${prayerIcons.fajr}</span>
-                    <span class="popup-prayer-name">Fajr</span>
-                    <span class="popup-prayer-time">${masjid.prayerTimes.fajr}</span>
-                </div>
-                <div class="popup-prayer-item">
-                    <span class="popup-prayer-icon">${prayerIcons.dhuhr}</span>
-                    <span class="popup-prayer-name">Dhuhr</span>
-                    <span class="popup-prayer-time">${masjid.prayerTimes.dhuhr}</span>
-                </div>
-                <div class="popup-prayer-item">
-                    <span class="popup-prayer-icon">${prayerIcons.asr}</span>
-                    <span class="popup-prayer-name">Asr</span>
-                    <span class="popup-prayer-time">${masjid.prayerTimes.asr}</span>
-                </div>
-                <div class="popup-prayer-item">
-                    <span class="popup-prayer-icon">${prayerIcons.maghrib}</span>
-                    <span class="popup-prayer-name">Maghrib</span>
-                    <span class="popup-prayer-time">${masjid.prayerTimes.maghrib}</span>
-                </div>
-                <div class="popup-prayer-item">
-                    <span class="popup-prayer-icon">${prayerIcons.isha}</span>
-                    <span class="popup-prayer-name">Isha</span>
-                    <span class="popup-prayer-time">${masjid.prayerTimes.isha}</span>
-                </div>
-            </div>
-        `;
-
-        const jumuahTimesHTML = masjid.jumuahTimes && masjid.jumuahTimes.length > 0
-            ? `<div class="popup-jumuah">
-                <strong>Jumuah:</strong> ${masjid.jumuahTimes.join(', ')}
-               </div>`
-            : '';
-
-        const popupContent = `
-            <div class="popup-content">
-                <div class="popup-title">${masjid.name}</div>
-                <div class="popup-address">${masjid.address}</div>
-                <span class="popup-distance">${masjid.distance}</span>
-                ${prayerTimesHTML}
-                ${jumuahTimesHTML}
-            </div>
-        `;
-
-        marker.bindPopup(popupContent);
-
-        // Add click handler to center the map on the marker
+        // Add click handler to center the map on the marker and highlight
         marker.on('click', function() {
-            mapInstance.setView(masjid.coordinates, 13, {
-                animate: true,
-                duration: 0.5
-            });
+            selectMasjid(masjid.id);
         });
 
-        markersArray.push(marker);
+        markers.push({ marker, masjidId: masjid.id });
     });
 
     // Fit bounds to show all markers
-    if (markersArray.length > 0) {
-        const group = L.featureGroup(markersArray);
-        mapInstance.fitBounds(group.getBounds().pad(0.1));
+    if (markers.length > 0) {
+        const group = L.featureGroup(markers.map(m => m.marker));
+        map.fitBounds(group.getBounds().pad(0.1));
     }
 }
 
 function initMap() {
     map = createMapInstance('map');
-    addMarkersToMap(map, markers);
+    addMarkersToMap();
 }
 
-function initCombinedMap() {
-    if (!mapCombined) {
-        mapCombined = createMapInstance('map-combined');
-        addMarkersToMap(mapCombined, markersCombined);
-    }
-}
-
-// Calculate distance between two coordinates using Haversine formula
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 3959; // Earth's radius in miles
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-    return distance;
-}
-
-// Get user's location and update UI
-function getUserLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                userLocation = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
-
-                // Add user marker to map
-                plotUserLocation();
-
-                // Calculate distances and sort masjids
-                updateDistances();
-
-                // Re-render the lists with sorted data
-                renderMasjidList('masjid-list');
-                renderMasjidList('masjid-list-combined');
-
-                // Recenter maps to include user location
-                const group = L.featureGroup([
-                    userMarker,
-                    ...markers
-                ]);
-                map.fitBounds(group.getBounds().pad(0.1));
-
-                // Update combined map if it exists
-                if (mapCombined && userMarkerCombined) {
-                    const groupCombined = L.featureGroup([
-                        userMarkerCombined,
-                        ...markersCombined
-                    ]);
-                    mapCombined.fitBounds(groupCombined.getBounds().pad(0.1));
-                }
-            },
-            (error) => {
-                console.error('Error getting location:', error);
-                alert('Unable to get your location. Please enable location services.');
-            }
+// Geocode location (city or zip code) using Nominatim
+async function searchLocation(query) {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us,ca&limit=1`
         );
-    } else {
-        alert('Geolocation is not supported by your browser.');
-    }
-}
+        const data = await response.json();
 
-// Plot user's location on the map
-function plotUserLocation() {
-    const userIcon = L.divIcon({
-        className: 'user-marker',
-        html: `<div style="
-            background: #3b82f6;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        ">
-            <span style="font-size: 18px;">📍</span>
-        </div>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-        popupAnchor: [0, -15]
-    });
+        if (data && data.length > 0) {
+            const location = data[0];
+            const lat = parseFloat(location.lat);
+            const lon = parseFloat(location.lon);
 
-    // Add to main map
-    if (userMarker) {
-        map.removeLayer(userMarker);
-    }
-    userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
-        .addTo(map)
-        .bindPopup('<div class="popup-content"><div class="popup-title">Your Location</div></div>');
-
-    // Add to combined map if it exists
-    if (mapCombined) {
-        if (userMarkerCombined) {
-            mapCombined.removeLayer(userMarkerCombined);
+            // Center map on the searched location
+            map.setView([lat, lon], 11, {
+                animate: true,
+                duration: 1
+            });
+        } else {
+            alert('Location not found. Please try a different city or zip code.');
         }
-        userMarkerCombined = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
-            .addTo(mapCombined)
-            .bindPopup('<div class="popup-content"><div class="popup-title">Your Location</div></div>');
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        alert('Error searching for location. Please try again.');
     }
 }
 
-// Update distances based on user location
-function updateDistances() {
-    if (!userLocation) return;
+// Select and highlight a masjid
+function selectMasjid(masjidId) {
+    selectedMasjidId = masjidId;
 
-    masjids.forEach(masjid => {
-        const distance = calculateDistance(
-            userLocation.lat,
-            userLocation.lng,
-            masjid.coordinates[0],
-            masjid.coordinates[1]
-        );
-        masjid.calculatedDistance = distance;
-        masjid.distance = `${distance.toFixed(1)} miles`;
+    // Find the masjid
+    const masjid = masjids.find(m => m.id === masjidId);
+    if (!masjid) return;
+
+    // Center map on the masjid
+    map.setView(masjid.coordinates, 14, {
+        animate: true,
+        duration: 0.5
     });
 
-    // Sort masjids by distance
-    masjids.sort((a, b) => a.calculatedDistance - b.calculatedDistance);
+    // Highlight the selected card in the list
+    document.querySelectorAll('.masjid-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+
+    const selectedCard = document.querySelector(`[data-masjid-id="${masjidId}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+        // Scroll the card into view
+        selectedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 }
 
 // Render Masjid List
-function renderMasjidList(containerId = 'masjid-list') {
-    const listContainer = document.getElementById(containerId);
+function renderMasjidList() {
+    const listContainer = document.getElementById('masjid-list');
     if (!listContainer) return;
 
     const html = masjids.map(masjid => `
-        <div class="masjid-card">
+        <div class="masjid-card" data-masjid-id="${masjid.id}" onclick="selectMasjid(${masjid.id})" style="cursor: pointer;">
             <div class="masjid-header">
                 <div class="masjid-icon">🕌</div>
                 <div class="masjid-info">
@@ -374,58 +244,33 @@ function renderMasjidList(containerId = 'masjid-list') {
     listContainer.innerHTML = html;
 }
 
-// View Toggle Functionality
-function setupViewToggle() {
-    const toggleButtons = document.querySelectorAll('.toggle-btn');
-    const views = document.querySelectorAll('.view');
+// Setup search functionality
+function setupSearch() {
+    const searchInput = document.getElementById('location-search');
+    const searchBtn = document.getElementById('search-btn');
 
-    toggleButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const viewType = button.getAttribute('data-view');
+    // Search on button click
+    searchBtn.addEventListener('click', () => {
+        const query = searchInput.value.trim();
+        if (query) {
+            searchLocation(query);
+        }
+    });
 
-            // Update active button
-            toggleButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-
-            // Update active view
-            views.forEach(view => view.classList.remove('active'));
-            document.getElementById(`${viewType}-view`).classList.add('active');
-
-            // Handle map initialization and resizing
-            if (viewType === 'map') {
-                setTimeout(() => {
-                    map.invalidateSize();
-                }, 100);
-            } else if (viewType === 'combined') {
-                // Initialize combined map if not already done
-                if (!mapCombined) {
-                    initCombinedMap();
-                    // Add user marker if location is available
-                    if (userLocation) {
-                        plotUserLocation();
-                        // Fit bounds to include user and markers
-                        const allMarkers = userMarkerCombined ? [userMarkerCombined, ...markersCombined] : markersCombined;
-                        if (allMarkers.length > 0) {
-                            const group = L.featureGroup(allMarkers);
-                            mapCombined.fitBounds(group.getBounds().pad(0.1));
-                        }
-                    }
-                }
-                setTimeout(() => {
-                    mapCombined.invalidateSize();
-                }, 100);
+    // Search on Enter key
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const query = searchInput.value.trim();
+            if (query) {
+                searchLocation(query);
             }
-        });
+        }
     });
 }
 
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     initMap();
-    renderMasjidList('masjid-list');
-    renderMasjidList('masjid-list-combined');
-    setupViewToggle();
-
-    // Request user's location
-    getUserLocation();
+    renderMasjidList();
+    setupSearch();
 });
