@@ -33,7 +33,7 @@
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                 </svg>
-                Map View
+                Map
             </button>
             <button class="toggle-btn" data-view="list">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -44,7 +44,15 @@
                     <line x1="3" y1="12" x2="3.01" y2="12"></line>
                     <line x1="3" y1="18" x2="3.01" y2="18"></line>
                 </svg>
-                List View
+                List
+            </button>
+            <button class="toggle-btn" data-view="combined">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="18"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                </svg>
+                Combined
             </button>
         </div>
     </div>
@@ -61,6 +69,20 @@
             <div id="list-view" class="view">
                 <div class="masjid-list" id="masjid-list">
                     <!-- Masjid cards will be inserted here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Combined View -->
+            <div id="combined-view" class="view">
+                <div class="combined-container">
+                    <div class="combined-map">
+                        <div id="map-combined"></div>
+                    </div>
+                    <div class="combined-list">
+                        <div class="masjid-list" id="masjid-list-combined">
+                            <!-- Masjid cards will be inserted here by JavaScript -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
