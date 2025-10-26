@@ -12,7 +12,8 @@ const masjids = [
             asr: "4:45 PM",
             maghrib: "7:15 PM",
             isha: "8:45 PM"
-        }
+        },
+        jumuahTimes: ["12:30 PM", "1:30 PM", "2:30 PM"]
     },
     {
         id: 2,
@@ -26,7 +27,8 @@ const masjids = [
             asr: "4:50 PM",
             maghrib: "7:20 PM",
             isha: "8:50 PM"
-        }
+        },
+        jumuahTimes: ["1:00 PM", "2:00 PM"]
     },
     {
         id: 3,
@@ -40,21 +42,24 @@ const masjids = [
             asr: "4:48 PM",
             maghrib: "7:18 PM",
             isha: "8:48 PM"
-        }
+        },
+        jumuahTimes: ["1:15 PM", "2:00 PM", "2:45 PM"]
     }
 ];
 
 // Initialize Map
 let map;
 let markers = [];
+let userLocation = null;
+let userMarker = null;
 
 function initMap() {
     // Create map centered on Houston
     map = L.map('map').setView([29.7604, -95.3698], 11);
 
-    // Add tile layer (OpenStreetMap)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    // Add tile layer (CartoDB Positron)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         maxZoom: 19
     }).addTo(map);
 
@@ -88,10 +93,17 @@ function initMap() {
             .addTo(map);
 
         // Create popup content
+        const jumuahTimesHTML = masjid.jumuahTimes && masjid.jumuahTimes.length > 0
+            ? `<div class="popup-jumuah">
+                <strong>Jumuah:</strong> ${masjid.jumuahTimes.join(', ')}
+               </div>`
+            : '';
+
         const popupContent = `
             <div class="popup-content">
                 <div class="popup-title">${masjid.name}</div>
                 <div class="popup-address">${masjid.address}</div>
+                ${jumuahTimesHTML}
                 <span class="popup-distance">${masjid.distance}</span>
             </div>
         `;
@@ -103,6 +115,111 @@ function initMap() {
     // Fit bounds to show all markers
     const group = L.featureGroup(markers);
     map.fitBounds(group.getBounds().pad(0.1));
+}
+
+// Calculate distance between two coordinates using Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    return distance;
+}
+
+// Get user's location and update UI
+function getUserLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                // Add user marker to map
+                plotUserLocation();
+
+                // Calculate distances and sort masjids
+                updateDistances();
+
+                // Re-render the list with sorted data
+                renderMasjidList();
+
+                // Optionally recenter map to include user location
+                const allPoints = [
+                    [userLocation.lat, userLocation.lng],
+                    ...masjids.map(m => m.coordinates)
+                ];
+                const group = L.featureGroup([
+                    userMarker,
+                    ...markers
+                ]);
+                map.fitBounds(group.getBounds().pad(0.1));
+            },
+            (error) => {
+                console.error('Error getting location:', error);
+                alert('Unable to get your location. Please enable location services.');
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by your browser.');
+    }
+}
+
+// Plot user's location on the map
+function plotUserLocation() {
+    if (userMarker) {
+        map.removeLayer(userMarker);
+    }
+
+    const userIcon = L.divIcon({
+        className: 'user-marker',
+        html: `<div style="
+            background: #3b82f6;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        ">
+            <span style="font-size: 18px;">📍</span>
+        </div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -15]
+    });
+
+    userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
+        .addTo(map)
+        .bindPopup('<div class="popup-content"><div class="popup-title">Your Location</div></div>');
+}
+
+// Update distances based on user location
+function updateDistances() {
+    if (!userLocation) return;
+
+    masjids.forEach(masjid => {
+        const distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            masjid.coordinates[0],
+            masjid.coordinates[1]
+        );
+        masjid.calculatedDistance = distance;
+        masjid.distance = `${distance.toFixed(1)} miles`;
+    });
+
+    // Sort masjids by distance
+    masjids.sort((a, b) => a.calculatedDistance - b.calculatedDistance);
 }
 
 // Render Masjid List
@@ -145,6 +262,19 @@ function renderMasjidList() {
                         <span class="prayer-time">${masjid.prayerTimes.isha}</span>
                     </div>
                 </div>
+                ${masjid.jumuahTimes && masjid.jumuahTimes.length > 0 ? `
+                <div class="jumuah-times">
+                    <h4>Jumuah Times</h4>
+                    <div class="jumuah-grid">
+                        ${masjid.jumuahTimes.map((time, index) => `
+                            <div class="prayer-item">
+                                <span class="prayer-name">Jumuah ${index + 1}</span>
+                                <span class="prayer-time">${time}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
             </div>
         </div>
     `).join('');
@@ -184,4 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMap();
     renderMasjidList();
     setupViewToggle();
+
+    // Request user's location
+    getUserLocation();
 });
