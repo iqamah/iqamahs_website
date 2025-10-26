@@ -234,6 +234,18 @@ body {
     color: var(--primary-color);
 }
 
+.jumuah-times {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.jumuah-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+}
+
 /* Leaflet Popup Customization */
 .leaflet-popup-content-wrapper {
     border-radius: 12px;
@@ -271,6 +283,15 @@ body {
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
+}
+
+.popup-jumuah {
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    background: var(--background);
+    border-radius: 8px;
 }
 
 /* Footer */
