@@ -262,6 +262,11 @@ function addMarkersToMap() {
 function initMap() {
     map = createMapInstance('map');
     addMarkersToMap();
+
+    // Force map to recalculate size after DOM is fully rendered
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 100);
 }
 
 // Geocode location (city or zip code) using Nominatim
