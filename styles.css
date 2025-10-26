@@ -35,32 +35,11 @@ body {
     padding: 0;
 }
 
-.container-header {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-    width: 100%;
-}
-
 .container-search {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
     width: 100%;
-}
-
-/* Header */
-.header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    color: white;
-    padding: 1rem 0;
-    box-shadow: var(--shadow);
-}
-
-.logo {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0;
 }
 
 /* Search Section */
@@ -379,15 +358,6 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .header {
-        padding: 1rem 0;
-    }
-
-    .logo {
-        font-size: 1.5rem;
-    }
-
-    .container-header,
     .container-search {
         padding: 0 1rem;
     }
